@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import axios from 'axios';
 import { Card, CardContent } from '@/components/ui/card.jsx';
 import { Button } from '@/components/ui/button.jsx';
 import { Badge } from '@/components/ui/badge.jsx';
@@ -31,11 +32,9 @@ export default function BuddyBeacon({ user, eventId }) {
 
   // Fetch team posts when the component loads or eventId prop changes
   useEffect(() => {
-    // If no eventId is passed, it means we're viewing the general Buddy Beacon.
-    // For now, we'll just show nothing, but you could fetch all posts here.
     if (!eventId) {
       setIsLoading(false);
-      setPosts([]);
+      setPosts([]); // In a real app, you might fetch all posts here
       setEventName('');
       return;
     }
@@ -60,7 +59,7 @@ export default function BuddyBeacon({ user, eventId }) {
     fetchTeamPosts();
   }, [eventId]);
 
-  // Your existing filtering and search logic, now working on live data
+  // Filtering and search logic
   const filteredPosts = useMemo(() => {
     let filtered = posts;
 
@@ -69,10 +68,11 @@ export default function BuddyBeacon({ user, eventId }) {
         filtered = filtered.filter(post => new Date(post.expiresAt) > new Date());
         break;
       case 'my-posts':
-        filtered = filtered.filter(post => post.authorId === user?.id); // Matches against authorId
+        filtered = filtered.filter(post => post.authorId === user?.id);
         break;
       case 'applied':
-        filtered = []; // Logic to filter posts user has applied to would go here
+        // This would require backend logic to track applications
+        filtered = [];
         break;
       default:
         break;
@@ -95,15 +95,16 @@ export default function BuddyBeacon({ user, eventId }) {
     { id: 'all', label: 'All Posts', count: posts.length },
     { id: 'active', label: 'Active', count: posts.filter(p => new Date(p.expiresAt) > new Date()).length },
     { id: 'my-posts', label: 'My Posts', count: posts.filter(p => p.authorId === user?.id).length },
-    { id: 'applied', label: 'Applied', count: 0 }
+    { id: 'applied', label: 'Applied', count: 0 } // Placeholder
   ];
 
-  // Your helper functions
   const getRemainingTime = (expiresAt) => {
     const diff = new Date(expiresAt).getTime() - new Date().getTime();
     if (diff <= 0) return 'Expired';
     const hours = Math.floor(diff / (1000 * 60 * 60));
-    return `${hours} hours remaining`;
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 0) return `${hours} hours remaining`;
+    return `${minutes} minutes remaining`;
   };
 
   const handleApplyToTeam = (post) => {
@@ -111,11 +112,47 @@ export default function BuddyBeacon({ user, eventId }) {
     setShowApplicationModal(true);
   };
 
-  const handleSubmitApplication = () => {
-    // TODO: Wire this up to a backend API call
-    console.log('Submitting application for post:', selectedPost.id);
-    setShowApplicationModal(false);
-    alert('Application submitted!');
+  const addSkill = () => {
+    if (applicationData.newSkill.trim() && !applicationData.relevantSkills.includes(applicationData.newSkill.trim())) {
+      setApplicationData(prev => ({
+        ...prev,
+        relevantSkills: [...prev.relevantSkills, prev.newSkill.trim()],
+        newSkill: ''
+      }));
+    }
+  };
+
+  const removeSkill = (skillToRemove) => {
+    setApplicationData(prev => ({
+      ...prev,
+      relevantSkills: prev.relevantSkills.filter(skill => skill !== skillToRemove)
+    }));
+  };
+
+  const handleSubmitApplication = async () => {
+    if (!applicationData.message.trim()) {
+      alert('Please write a message explaining why you want to join this team.');
+      return;
+    }
+
+    try {
+      const payload = {
+        message: applicationData.message,
+        applicantSkills: applicationData.relevantSkills
+      };
+
+      // Using axios to post to the backend endpoint
+      await axios.post(`/api/beacon/${selectedPost.id}/applications`, payload);
+
+      setShowApplicationModal(false);
+      setSelectedPost(null);
+      setApplicationData({ message: '', relevantSkills: [], newSkill: '' });
+      alert('🎉 Application submitted! The team leader will review your application.');
+
+    } catch (err) {
+      console.error("Failed to submit application:", err);
+      alert("There was an error submitting your application. Please try again.");
+    }
   };
 
   const renderPosts = () => {
@@ -202,8 +239,9 @@ export default function BuddyBeacon({ user, eventId }) {
         </p>
       </div>
 
-      {/* Search and Filter UI */}
-      <Input placeholder="Search by event or skills..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+      <div className="max-w-2xl mx-auto">
+        <Input placeholder="Search by event or skills..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="rounded-xl p-4 text-lg w-full" />
+      </div>
       <div className="flex flex-wrap justify-center gap-2">
         {filters.map((filter) => (
           <Button key={filter.id} variant={activeFilter === filter.id ? 'default' : 'outline'} onClick={() => setActiveFilter(filter.id)}>
@@ -214,7 +252,57 @@ export default function BuddyBeacon({ user, eventId }) {
 
       <div className="space-y-6">{renderPosts()}</div>
 
-      {/* Application Modal JSX (no changes needed) */}
+      {showApplicationModal && selectedPost && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 rounded-2xl shadow-2xl">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h3 className="text-2xl font-bold">Apply to Team</h3>
+                <p className="text-muted-foreground">{selectedPost.eventName}</p>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => setShowApplicationModal(false)} className="rounded-full">✕</Button>
+            </div>
+            <div className="space-y-6">
+              <div className="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                <h4 className="font-semibold text-blue-800 mb-2">Team Details:</h4>
+                <div className="space-y-1 text-sm text-blue-700">
+                  <div><strong>Leader:</strong> {selectedPost.author.name}</div>
+                  <div><strong>Current Size:</strong> {(selectedPost.applicants?.length || 0) + 1}/{selectedPost.maxTeamSize} members</div>
+                  <div><strong>Skills Needed:</strong> {selectedPost.requiredSkills.join(', ')}</div>
+                </div>
+              </div>
+              <div>
+                <label className="block font-semibold mb-3 text-lg">Your Relevant Skills</label>
+                <div className="space-y-3">
+                  {applicationData.relevantSkills.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {applicationData.relevantSkills.map((skill) => (
+                        <Badge key={skill} variant="outline" className="cursor-pointer hover:bg-destructive/10" onClick={() => removeSkill(skill)}>
+                          {skill} ✕
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex space-x-2">
+                    <Input placeholder="Add a skill..." value={applicationData.newSkill} onChange={(e) => setApplicationData(prev => ({ ...prev, newSkill: e.target.value }))} onKeyDown={(e) => e.key === 'Enter' && addSkill()} className="rounded-xl" />
+                    <Button variant="outline" onClick={addSkill} className="rounded-xl">Add</Button>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="block font-semibold mb-3 text-lg">Why do you want to join this team? *</label>
+                <Textarea placeholder="Tell them about your experience..." value={applicationData.message} onChange={(e) => setApplicationData(prev => ({ ...prev, message: e.target.value }))} rows={4} className="rounded-xl p-4" />
+              </div>
+              <div className="flex space-x-4">
+                <Button onClick={handleSubmitApplication} disabled={!applicationData.message.trim()} className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600">
+                  🚀 Submit Application
+                </Button>
+                <Button variant="outline" onClick={() => setShowApplicationModal(false)} className="py-3 rounded-xl">Cancel</Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

@@ -41,6 +41,7 @@ export default function EventsHub({ user, onNavigateToBeacon }) {
     externalLink: '',
     organizer: user?.name || 'Moderator',
   });
+
   const isModerator = user?.isModerator || true;
   const categoryOptions = [
     { id: 'Hackathon', label: 'Hackathon', icon: '💻' },
@@ -93,7 +94,7 @@ export default function EventsHub({ user, onNavigateToBeacon }) {
     const postData = { eventId: selectedEvent.id, description: teamPost.description, extraSkills: teamPost.extraSkills };
     try {
       await createTeamPost(postData);
-      alert('Team post created!');
+      alert('🎉 Your team post has been created in Buddy Beacon! It will expire in 24 hours and auto-create a Collab Pod if you get applicants.');
       if (onNavigateToBeacon) onNavigateToBeacon(selectedEvent.id);
       setShowFindTeamModal(false);
       setTeamPost({ extraSkills: [], newSkill: '', description: '' });
@@ -117,6 +118,12 @@ export default function EventsHub({ user, onNavigateToBeacon }) {
       const response = await createEvent(newEvent);
       setAllEvents(prevEvents => [response.data, ...prevEvents]);
       setShowCreateModal(false);
+      // Reset the form
+      setNewEvent({
+        title: '', category: 'Hackathon', date: '', time: '', description: '',
+        requiredSkills: [], newSkill: '', maxTeamSize: 4, externalLink: '',
+        organizer: user?.name || 'Moderator',
+      });
     } catch (err) {
       alert('Failed to create event.');
     } finally {
@@ -149,7 +156,6 @@ export default function EventsHub({ user, onNavigateToBeacon }) {
     if (error) return <div className="col-span-full text-center text-red-400 p-8">{error}</div>;
     if (filteredEvents.length === 0) return <div className="col-span-full text-center text-muted-foreground p-8">No events found.</div>;
 
-    // --- FIX 1: Added the complete JSX for the Event Card ---
     return filteredEvents.map((event) => (
       <Card key={event.id} className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] rounded-2xl">
         <div className="p-6 space-y-4">
@@ -206,7 +212,7 @@ export default function EventsHub({ user, onNavigateToBeacon }) {
       )}
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">{renderEvents()}</div>
 
-      {/* --- FIX 2: Added the complete JSX for the Find Team Modal --- */}
+      {/* Find Team Modal */}
       {showFindTeamModal && selectedEvent && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 rounded-2xl shadow-2xl">
@@ -248,6 +254,7 @@ export default function EventsHub({ user, onNavigateToBeacon }) {
         </div>
       )}
 
+      {/* Create Event Modal */}
       {showCreateModal && isModerator && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 rounded-2xl shadow-2xl">

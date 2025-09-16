@@ -3,14 +3,15 @@ import { Card } from './ui/card.jsx';
 import { Button } from './ui/button.jsx';
 import { Input } from './ui/input.jsx';
 import { Textarea } from './ui/textarea.jsx';
-import { Badge } from './ui/badge.jsx';
 
 // Main component
 export default function LoginFlow({ onComplete, initialFlowState }) {
+  // Sets the starting step based on whether the user was redirected from LinkedIn
   const [currentStep, setCurrentStep] = useState(initialFlowState.step);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // A single state object for all form data.
   const [formData, setFormData] = useState({
     id: null,
     email: '',
@@ -28,6 +29,7 @@ export default function LoginFlow({ onComplete, initialFlowState }) {
     profilePicUrl: '',
   });
 
+  // Pre-populates the form with data fetched after the LinkedIn redirect
   useEffect(() => {
     if (initialFlowState.data) {
       setFormData(prev => ({ ...prev, ...initialFlowState.data }));
@@ -36,12 +38,14 @@ export default function LoginFlow({ onComplete, initialFlowState }) {
 
   const [emailValid, setEmailValid] = useState(false);
 
+  // --- Options ---
   const yearOptions = ['1st Year', '2nd Year', '3rd Year', '4th Year', 'PG/Masters', 'PhD'];
   const departmentOptions = ['Computer Science', 'Information Technology', 'Electronics', 'Mechanical', 'Other'];
   const skillOptions = ['React', 'Python', 'JavaScript', 'Node.js', 'Java', 'C++', 'UI/UX Design', 'AI/ML'];
   const roleOptions = ['Frontend Developer', 'Backend Developer', 'Full Stack Developer', 'UI/UX Designer'];
   const excitingTagsOptions = ['AI x Health', 'Startup x Campus', 'Social Impact', 'FinTech', 'EdTech'];
 
+  // --- INPUT HANDLERS ---
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -59,12 +63,15 @@ export default function LoginFlow({ onComplete, initialFlowState }) {
     }));
   };
 
+  // --- BACKEND API CALLS ---
   const handleCollegeEmailSubmit = async () => {
     if (!emailValid) return;
     setIsLoading(true);
     setError('');
     try {
+      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
+      // Mock successful registration
       const mockUser = {
         id: 'temp-' + Date.now(),
         email: formData.email,
@@ -84,14 +91,16 @@ export default function LoginFlow({ onComplete, initialFlowState }) {
     setIsLoading(true);
     setError('');
     try {
+      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
+      // Mock successful profile update
       const finalUser = {
         ...formData,
         badges: ['Core Looped ⭐'],
         level: 1,
         xp: 50,
         totalXP: 100,
-        isModerator: true // <-- Add this line for testing
+        isModerator: true // <-- Kept this line for testing moderator features
       };
       setFormData(finalUser);
       setCurrentStep('success');
@@ -117,6 +126,7 @@ export default function LoginFlow({ onComplete, initialFlowState }) {
     }
   };
 
+  // --- RENDER METHODS ---
   if (currentStep === 'login') {
     return (
       <div className="flow-login-signup min-h-screen bg-gradient-to-br from-primary/5 via-background to-purple-500/5 flex items-center justify-center p-4">
@@ -186,6 +196,7 @@ export default function LoginFlow({ onComplete, initialFlowState }) {
     );
   }
 
+  // Multi-step profile form
   return (
     <form onSubmit={handleProfileSubmit}>
       {currentStep === 'step1' && (

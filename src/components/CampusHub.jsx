@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Button } from './ui/button.jsx';
-import { Card, CardHeader, CardContent } from './ui/card.jsx';
+import { Card, CardContent } from './ui/card.jsx';
 import { Badge } from './ui/badge.jsx';
 import CampusOverview from './campus/CampusOverview.jsx';
 import CampusFeed from './campus/CampusFeed.jsx';
@@ -11,7 +10,7 @@ import { useTheme } from '../lib/theme.js';
 export default function CampusHub({
   user,
   initialView = 'overview',
-  eventId = null, // 1. Accept an optional eventId prop
+  eventId = null,
   onCreateCollabPod,
   onEnterCollabPod
 }) {
@@ -119,6 +118,7 @@ export default function CampusHub({
             className={getNavItemStyles(item.id)}
             style={{ animationDelay: `${index * 100}ms` }}
           >
+            {/* Button background shimmer (not in windows1992) */}
             {theme !== 'windows1992' && (
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
             )}
@@ -145,7 +145,7 @@ export default function CampusHub({
       <div className="animate-in slide-up">
         {activeView === 'overview' && <CampusOverview user={user} />}
         {activeView === 'feed' && <CampusFeed user={user} />}
-        {/* 2. Pass the eventId down to the BuddyBeacon component */}
+        {/* Pass the eventId down to the BuddyBeacon component */}
         {activeView === 'beacon' && <BuddyBeacon user={user} eventId={eventId} />}
         {activeView === 'pods' && (
           <CollabPods

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Your existing Axios instance setup
+// Axios instance setup
 const api = axios.create({
     baseURL: 'http://localhost:8080',
     withCredentials: true,
@@ -10,7 +10,7 @@ const api = axios.create({
     }
 });
 
-// --- API Functions for Events Hub ---
+// --- API Functions for Events Hub & Buddy Beacon ---
 
 /**
  * Fetches events, with an optional filter for category.
@@ -54,6 +54,5 @@ export const createEvent = (eventData) => {
     return api.post('/api/events', eventData);
 };
 
-
-// Your existing default export
+// Default export of the configured axios instance
 export default api;

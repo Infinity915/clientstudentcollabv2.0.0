@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useSearchParams, useNavigate } from 'react-router-dom';
-import { ThemeContext, THEME_ORDER, VALID_THEMES, THEME_STORAGE_KEY } from '@/lib/theme.js';
+import { ThemeContext, VALID_THEMES, THEME_STORAGE_KEY } from '@/lib/theme.js';
 
-// --- Main Components ---
+// --- Main Components (Corrected Paths) ---
 import EventsHub from '@/components/EventsHub.jsx';
 import CampusHub from '@/components/CampusHub.jsx';
 import InterHub from '@/components/InterHub.jsx';
